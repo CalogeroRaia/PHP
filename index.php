@@ -1,93 +1,66 @@
-<?php
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eCommerce</title>
+    <?php
+    
+    require_once 'styles.php';
+    require 'context.php';
 
-class EcommerceSystem
-{
-    private $productsUrl = "https://mockend.up.railway.app/api/products";
-    private $products = array();
-    private $cart = array(); 
+    
+    echo getGridStyles();
+    echo getContainerCardStyles();
+    echo getContainerPriceQtyStyles();
+    echo getContainerTitleAndDescriptionStyles();
+    echo getDivCartStyles(false); 
+    ?>
+</head>
+<body>
+    <?php 
+        echo '<a href="http://localhost/ecommerce/index.php"><h1>Products</h1></a>';
+        echo '<a href="http://localhost/ecommerce/cart.php"><h1>Cart</h1></a>';
+        echo '<h1>Product</h1>';
+    ?>
+    <?php 
+        $router = new Router("/index.php"); 
+        $appContext = new AppContext($router);
+    ?>
+    <div class="Grid">
+        <?php
 
-    public function __construct()
-    {
-        $this->fetchProducts();
-    }
-
-    private function fetchProducts()
-    {
-        $response = file_get_contents($this->productsUrl);
-        $productsData = json_decode($response, true);
-
-        foreach ($productsData as $productData) {
-            $product = new stdClass();
-            $product->id = $productData['id'];
-            $product->name = $productData['name'];
-            $product->description = $productData['description'];
-            $product->price = $productData['price'];
-            $product->quantity = $productData['quantity'];
-            $this->products[$product->id] = $product;
+        try{
+        $appContext = new AppContext($router);
+            if ($appContext->products) {
+                foreach ($appContext->products as $product) {
+                    echo '<div class="ContainerCard">';
+                    echo '<img class="Thumbnail" src="' . $product['thumbnail'] . '" alt="Thumbnail">';
+                    echo '<div class="ContainerTitleAndDescription">';
+                    echo '<h2 class="Title">' . $product['title'] . '</h2>';
+                    echo '<p class="Description">' . $product['description'] . '</p>';
+                    echo '</div>';
+                    echo '<div class="ContainerPriceQty">';
+                    echo '<p class="Price">' . $product['price'] . ' €</p>';
+                    echo '<p class="Quantity">Disponibili: ' . $product['qty'] . '</p>';
+                    echo '</div>';
+                    echo '<div class="DivCart" onClick="' . $appContext->addToCart($product['id']) . '"';
+                    if ($product['qty'] === 0) {
+                        getDivCartStyles(false);
+                        echo ' disabled';
+                    }
+                    echo '>';
+                    echo '<p>ADD TO CART</p>';
+                    echo '</div>';
+                    echo '</div>';
+                }
+            } else {
+                echo "Nessun prodotto disponibile.";
+            }
+        }catch (Exception $e){
+            echo "Si è verificato un errore nel caricamento dei dati dei prodotti: " . $e->getMessage();
         }
-    }
-
-    public function displayProducts()
-    {
-        $productList = [];
-        foreach ($this->products as $product) {
-            $productList[] = array(
-                'id' => $product->id,
-                'name' => $product->name,
-                'description' => $product->description,
-                'price' => $product->price,
-                'quantity' => $product->quantity
-            );
-        }
-        return $productList;
-    }
-
-    public function getProduct($productId)
-    {
-        if (isset($this->products[$productId])) {
-            return $this->products[$productId];
-        } else {
-            return null;
-        }
-    }
-
-    public function addProduct($productData)
-    {
-        $product = new stdClass();
-        $product->id = $productData['id'];
-        $product->name = $productData['name'];
-        $product->description = $productData['description'];
-        $product->price = $productData['price'];
-        $product->quantity = $productData['quantity'];
-
-        $this->products[$product->id] = $product;
-    }
-
-    public function updateProduct($productId, $productData)
-    {
-        if (isset($this->products[$productId])) {
-            $product = $this->products[$productId];
-            $product->name = $productData['name'];
-            $product->description = $productData['description'];
-            $product->price = $productData['price'];
-            $product->quantity = $productData['quantity'];
-
-            $this->products[$productId] = $product;
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    public function deleteProduct($productId)
-    {
-        if (isset($this->products[$productId])) {
-            unset($this->products[$productId]);
-            return true;
-        } else {
-            return false;
-        }
-    }
-}
-
-?>
+        ?>
+    </div>
+</body>
+</html>
